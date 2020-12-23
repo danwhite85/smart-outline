@@ -19,7 +19,8 @@
 
     var defaultDomId = 'bbbx-a11y-fix';
     var defaultHideFocusCSS = '*:focus {outline:0 !important;}::-moz-focus-inner{border:0;}';
-    var defaultHtmlClass = 'so-keyboard-user';
+    var keyboardUserClass = 'so-keyboard-user';
+    var desktopUserClass = 'so-dekstop-user';
     var options = null;
 
     var KEYCODE_TAB = 9;
@@ -48,10 +49,11 @@
         removeHtmlClass: function(cssClass) {
             document.documentElement.classList.remove(cssClass);
         },
-        _clickListener: function() {
+        _mousedownListener: function() {
             smartOutline.setCSS(options.hideFocusCSS);
-            smartOutline.removeHtmlClass(options.htmlClass);
-            window.removeEventListener('click', smartOutline._clickListener, false);
+            smartOutline.removeHtmlClass(options.keyboardUserClass);
+            smartOutline.setHtmlClass(options.desktopUserClass);
+            window.removeEventListener('mousedown', smartOutline._mousedownListener, false);
             window.addEventListener('keydown', smartOutline._keyDownListener); // eslint-disable-line
         },
 
@@ -70,9 +72,10 @@
                 return;
 
             smartOutline.setCSS('');
-            smartOutline.setHtmlClass(options.htmlClass);
+            smartOutline.removeHtmlClass(options.desktopUserClass);
+            smartOutline.setHtmlClass(options.keyboardUserClass);
             window.removeEventListener('keydown', smartOutline._keyDownListener, false);
-            window.addEventListener('click', smartOutline._clickListener);
+            window.addEventListener('mousedown', smartOutline._mousedownListener);
         },
 
         getOptions: function() {
@@ -97,16 +100,15 @@
             options = {
                 domId: userOptions.domId || defaultDomId,
                 hideFocusCSS: userOptions.hideFocusCSS || defaultHideFocusCSS,
-                htmlClass: userOptions.htmlClass || defaultHtmlClass
+                keyboardUserClass: userOptions.keyboardUserClass || keyboardUserClass,
+                desktopUserClass: userOptions.desktopUserClass || desktopUserClass
             };
 
             // only add style element if it doesn't exist yet
             if(this.getStyleEl())
                 return this.getStyleEl();
 
-            // only bind the click handler if there is no a11y style element yet
-            window.addEventListener('click', smartOutline._clickListener);
-
+            // only setup if there is no a11y style element yet
             var head = document.head || document.getElementsByTagName('head')[0];
             var style = document.createElement('style');
             style.id = options.domId;
@@ -115,7 +117,12 @@
             if(!head)
                 return false;
 
-            return head.appendChild(style);
+            var styleEl = head.appendChild(style);
+
+            // init as a desktop user and bind to the keydown event
+            smartOutline._mousedownListener();
+
+            return styleEl;
         },
 
         destroy: function() {
@@ -126,7 +133,7 @@
 
                 options = null;
                 window.removeEventListener('keydown', smartOutline._keyDownListener, false);
-                window.removeEventListener('click', smartOutline._clickListener, false);
+                window.removeEventListener('mousedown', smartOutline._mousedownListener, false);
             }
         }
     };
