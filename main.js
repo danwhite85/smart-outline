@@ -49,7 +49,7 @@
         removeHtmlClass: function(cssClass) {
             document.documentElement.classList.remove(cssClass);
         },
-        _mousedownListener: function(e) {
+        _mousedownListener: function() {
             smartOutline.setCSS(options.hideFocusCSS);
             smartOutline.removeHtmlClass(options.keyboardUserClass);
             smartOutline.setHtmlClass(options.desktopUserClass);
@@ -108,9 +108,7 @@
             if(this.getStyleEl())
                 return this.getStyleEl();
 
-            // only bind the mousedown handler if there is no a11y style element yet
-            window.addEventListener('mousedown', smartOutline._mousedownListener);
-
+            // only setup if there is no a11y style element yet
             var head = document.head || document.getElementsByTagName('head')[0];
             var style = document.createElement('style');
             style.id = options.domId;
@@ -119,7 +117,12 @@
             if(!head)
                 return false;
 
-            return head.appendChild(style);
+            var styleEl = head.appendChild(style);
+
+            // init as a desktop user and bind to the keydown event
+            smartOutline._mousedownListener();
+
+            return styleEl;
         },
 
         destroy: function() {
